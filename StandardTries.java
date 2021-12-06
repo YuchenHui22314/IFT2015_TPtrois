@@ -18,7 +18,7 @@ public class StandardTries {
         public DictionaryEntry getDe() {
             return de;
         }
-        //cunyi!
+        //cunyi!需要测试返回的是否为副本。忘了忘了。
         public ChainHashMap<String, Node> getHashChildrens() {
             return hashChildrens;
         }

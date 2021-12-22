@@ -1,12 +1,18 @@
 
 /**
- * DictionaryEntry
+ * DictionaryEntry : to store the meaning/type/translation related to a word.
  */
 public class DictionaryEntry {
     
     private String translation;
-    private String meaning;
     private String type;
+    private String meaning;
+
+    public DictionaryEntry(String translation, String type, String meaning){
+        this.translation = translation;
+        this.type = type;
+        this.meaning = meaning;
+    }
     
     public String getTranslation() {
         return translation;

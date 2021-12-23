@@ -1,20 +1,21 @@
-import java.lang.reflect.Constructor;
+import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.swing.text.DefaultEditorKit.InsertBreakAction;
+import javax.lang.model.element.Element;
 
 import ca.umontreal.maps.ChainHashMap;
 import ca.umontreal.maps.Entry;
-import ca.umontreal.trees.AbstractTree;
 
 /**
  * StandardTries
+ * @author Yuchen Hui    and     Yuyang Xiong
  */
 public class StandardTries {
 
     /**----------------------------------------------------------------
-     * --                      inner class node                      --
+     * --                      inner class Node                      --
      * ----------------------------------------------------------------
      */
     protected static class Node {
@@ -55,7 +56,7 @@ public class StandardTries {
         }
     }
     /**----------------------------------------------------------------
-     * --                  end of inner class node                   --
+     * --                  end of inner class Node                   --
      * ----------------------------------------------------------------
      */
 
@@ -78,50 +79,156 @@ public class StandardTries {
         word = word.concat("#"); 
         System.out.println(word);
         // search the place to insert and insert.
-        insert(this.root, word, dicEntry);
+        insertPrivate(this.root, word, dicEntry);
         
         
 
     }
 
-    private void insert(
+    private void insertPrivate(
         Node node, 
         String postfixWord, 
         DictionaryEntry dicEntry){
 
-            //begin with fisrt character and move character by character 
-            //forward to check if the character is already in the treis.
-            //if it has already been in the tries, we move to the corresponding
-            //node, else we add an pair <character,node> 
-            //reserved to the character and then move to the node just added
-            //when we get to the last character, we register the dictionaryEntry
-            //which contains meanings, types and translations.
-            while(postfixWord.length() >= 0){
-                // list for all possible succeeding characters 
-                // belongs to words aleady exist.
-                ChainHashMap<String,Node> childrens = node.getChildrens();
-                // next character of the word
-                String nextCharacter = postfixWord.substring(0,1);
-                // entry in the list corresponding to the next character
-                Node nextNode =childrens.get(nextCharacter);
+        //begin with fisrt character and move character by character 
+        //forward to check if the character is already in the treis.
+        //if it has already been in the tries, we move to the corresponding
+        //node, else we add an pair <character,node> 
+        //reserved to the character and then move to the node just added
+        //when we get to the last character, we register the dictionaryEntry
+        //which contains meanings, types and translations.
+        
+        while(postfixWord.length() > 0){
+            // list for all possible succeeding characters 
+            // belongs to words aleady exist.
+            ChainHashMap<String,Node> childrens = node.getChildrens();
+            // next character of the word
+            String nextCharacter = postfixWord.substring(0,1);
+            // entry in the list corresponding to the next character
+            Node nextNode =childrens.get(nextCharacter);
 
-                if (nextNode != null){ // prefix still matched
-                    node = nextNode;
-                }else{                 // new branch
-                    childrens.put(nextCharacter, new Node(null,node));
-                    node = childrens.get(nextCharacter); 
-                }
-                postfixWord = postfixWord.substring(1);
+            if (nextNode != null){ // prefix still matched
+                node = nextNode;
+            }else{                 // new branch
+                childrens.put(nextCharacter, new Node(null,node));
+                node = childrens.get(nextCharacter); 
             }
-            //< "#", dicEntry>
-            node.setDicEntry(dicEntry);
-        Node finalNode ;
+            postfixWord = postfixWord.substring(1);
+        }
+        //< "#", dicEntry>
+        node.setDicEntry(dicEntry);
+            
 
 
     }
 
-    private Map<Node,String> searchPlace(Node node, String postfixWord){
-        return new HashMap<>();
-
+    /**
+     * this methode search find all similar words and their 
+     * (meaning+type)/translation, or the word himself if the 
+     * word exists in the dictionary.
+     * @param node starting node of the search
+     * @param postfixWord postfix part of the word (we delete the first
+     * character each time we got to next node)
+     * @return HashMap which contains all similar words and their 
+     * (meaning+type)/translation, or the word himself if the 
+     * word exists in the dictionary.
+     */
+    private ChainHashMap<String,DictionaryEntry> SimilarWords(
+        Node node, 
+        String postfixWord){
+        
+        ArrayList<String> longestPrefix = new ArrayList<>();
+        ChainHashMap<String,DictionaryEntry> similarWords = 
+            new ChainHashMap<>();
+        Node finalNode = searchPlace(
+            longestPrefix,
+            node, 
+            postfixWord);
+        DictionaryEntry lastEntry = finalNode.getEntry();
+        // 404 not found
+        if (lastEntry == null){
+            WordsBeginWithPrefix(
+                similarWords, 
+                node, 
+                StringListToString(longestPrefix));
+            return similarWords;
+           
+        }
+        // otherwise word is found, we just return the hashMap 
+        // contains the word its self and information about it.
+        String wordFound = StringListToString(longestPrefix); 
+        similarWords.put(wordFound,lastEntry);
+        return similarWords;
     }
+    private void WordsBeginWithPrefix(
+        ChainHashMap<String,DictionaryEntry> similarWords,
+        Node beginNode,
+        String longestPrefix){
+        
+        ChainHashMap<String,Node> childrens = 
+            beginNode.getChildrens();
+        // if begin node is the root, it means that we have
+        // 0 word in dictionnary begin with the prefix.
+        if (childrens.size() == 0){
+            return;
+        }
+        //otherwise we look for all the words begin with longest prefix  
+        //and add them into similar words.
+        for (Entry<String,Node> element : childrens.entrySet()) {
+            String character = element.getKey();
+            Node nextNode = element.getValue();
+            if (character.equals("#")){
+                similarWords.put(
+                    longestPrefix,nextNode.getEntry());
+                return;
+            }else{
+                longestPrefix.concat(character);
+                WordsBeginWithPrefix(
+                    similarWords, 
+                    nextNode, 
+                    longestPrefix);
+                return;
+            }
+
+            
+        }
+
+        }
+    /**
+     * exemple transformation from ["a","p","p","l","e","#"] to "apple"
+     * @param list ["a","p","p","l","e","#"]
+     * @return  "apple"
+     */
+    private String StringListToString(ArrayList<String> list){
+        String result = "";
+        for (String character : list) {
+            if (!character.equals("#"))
+                result.concat(character);
+        }
+        return result;
+    }
+
+    private Node searchPlace(
+        ArrayList<String> longestPrefix, 
+        Node node,
+        String postfixWord){
+
+        // found
+        if (postfixWord.length() == 0){
+            return node;
+        }
+        ChainHashMap<String,Node> childrens = node.getChildrens();
+        String nextCharacter = postfixWord.substring(0,1);
+        Node nextNode =childrens.get(nextCharacter);
+        // not found
+        if (nextNode == null){
+            return node;
+        } 
+        // continue to search by recursive call
+        longestPrefix.add(nextCharacter);
+        return searchPlace(
+            longestPrefix, 
+            nextNode, 
+            postfixWord.substring(1));
+    } 
 }

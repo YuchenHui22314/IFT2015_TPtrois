@@ -122,6 +122,9 @@ public class StandardTries {
 
     }
 
+    public ChainHashMap<String,DictionaryEntry> get(String word){
+        return similarWords(this.root, word.concat("#"));
+    }
     /**
      * this methode search find all similar words and their 
      * (meaning+type)/translation, or the word himself if the 
@@ -133,7 +136,7 @@ public class StandardTries {
      * (meaning+type)/translation, or the word himself if the 
      * word exists in the dictionary.
      */
-    public ChainHashMap<String,DictionaryEntry> SimilarWords(
+    private ChainHashMap<String,DictionaryEntry> similarWords(
         Node node, 
         String postfixWord){
         
@@ -149,7 +152,7 @@ public class StandardTries {
         if (lastEntry == null){
             WordsBeginWithPrefix(
                 similarWords, 
-                node, 
+                finalNode, 
                 StringListToString(longestPrefix));
             return similarWords;
            
@@ -180,14 +183,11 @@ public class StandardTries {
             if (character.equals("#")){
                 similarWords.put(
                     longestPrefix,nextNode.getEntry());
-                return;
             }else{
-                longestPrefix.concat(character);
                 WordsBeginWithPrefix(
                     similarWords, 
                     nextNode, 
-                    longestPrefix);
-                return;
+                    longestPrefix.concat(character));
             }
 
             
@@ -203,7 +203,7 @@ public class StandardTries {
         String result = "";
         for (String character : list) {
             if (!character.equals("#"))
-                result.concat(character);
+                result += character;
         }
         return result;
     }

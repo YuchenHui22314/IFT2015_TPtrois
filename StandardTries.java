@@ -133,7 +133,7 @@ public class StandardTries {
      * (meaning+type)/translation, or the word himself if the 
      * word exists in the dictionary.
      */
-    private ChainHashMap<String,DictionaryEntry> SimilarWords(
+    public ChainHashMap<String,DictionaryEntry> SimilarWords(
         Node node, 
         String postfixWord){
         
